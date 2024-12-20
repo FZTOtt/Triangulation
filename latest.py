@@ -5,6 +5,7 @@ import networkx as nx
 import random
 from scipy.spatial import Delaunay
 import time
+from point import Point
 
 PLOT = True
 
@@ -19,36 +20,10 @@ start_points = filter_by_type(data, 'startPoint')
 end_points = filter_by_type(data, 'endPoint')
 polygons = filter_by_type(data, 'polygon')
 
-class Point:
-    def __init__(self, x=None, y=None, dict=None) -> None:
-        if dict is not None:
-            self.x = dict[0].get('x')
-            self.y = dict[0].get('y')
-        else:
-            self.x = x
-            self.y = y
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Point):
-            return self.x == other.x and self.y == other.y
-        return False
-
-    def print(self) -> None:
-        print(self.x, self.y)
-
 class Obstacle:
     def __init__(self, points: list[Point]) -> None:
         self.points = points
         self.color = (random.random(), random.random(), random.random())
-
-class Triangle:
-    def __init__(self, p1: Point, p2: Point, p3: Point) -> None:
-        self.p1 = p1
-        self.p2 = p2
-        self.p3 = p3
-
-    def print(self) -> None:
-        print(f"Triangle: ({self.p1.x}, {self.p1.y}), ({self.p2.x}, {self.p2.y}), ({self.p3.x}, {self.p3.y})")
 
 class Field:
     def __init__(self, start: Point, finish: Point, edges: list[Point], obstacles: list[Obstacle] = None) -> None:
@@ -57,7 +32,6 @@ class Field:
         self.edges = edges
         self.obstacles = obstacles
         self.points: list[Point] = []
-        self.triangles: list[Triangle] = []
 
     def triangulate_free_space(self):
         all_points = []
