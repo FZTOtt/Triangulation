@@ -26,10 +26,8 @@ class Obstacle:
 
         # Проверка направления обхода
         if Obstacle.is_clockwise(sorted_points):
-            print(sorted_points)
             return sorted_points
         else:
-            print(sorted_points[::-1])
             return sorted_points[::-1]
 
     @staticmethod
@@ -96,7 +94,6 @@ class Obstacle:
                 p4 = other.points[(j + 1) % len(other.points)]
                 intersection = Obstacle.line_intersection(p1, p2, p3, p4)
                 if intersection:
-                    print(f'линия {p1}, {p2} пересекает {p3}, {p4} в точке {intersection}')
                     intersections.append(intersection)
         return intersections
     

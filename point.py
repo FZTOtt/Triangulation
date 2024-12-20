@@ -1,7 +1,11 @@
 class Point:
-    def __init__(self, x=None, y=None) -> None:
-        self.x = x
-        self.y = y
+    def __init__(self, x=None, y=None, dict=None) -> None:
+        if dict is not None:
+            self.x = dict[0].get('x')
+            self.y = dict[0].get('y')
+        else:
+            self.x = x
+            self.y = y
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Point):

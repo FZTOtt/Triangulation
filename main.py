@@ -3,6 +3,7 @@ import time
 from point import Point
 from obstacle import Obstacle
 from field import Field
+from util import *
 
 PLOT = True
 
@@ -29,7 +30,7 @@ for polygon in polygons:
     obstacle = Obstacle(points)
     obstacles.append(obstacle)
 
-merged_obstacles = Obstacle.merge_intersecting_obstacles(obstacles)
+merged_obstacles = merge_all(obstacles)
 
 field = Field(start, finish, edges_points, merged_obstacles)
 

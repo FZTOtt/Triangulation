@@ -217,7 +217,7 @@ visualize_obstacles([obstacle1, obstacle2, obstacle3, obstacle4])
 
 # Объединение препятствий
 merged_obstacle = obstacle1.merge_with(obstacle2)
-merged_obstacle = merged_obstacle.merge_with(obstacle3)
+merged_obstacle, _ = merged_obstacle.merge_with(obstacle3)
 # merged_obstacle = merged_obstacle.merge_with(obstacle4)
 
 # Визуализация объединенного препятствия
