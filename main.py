@@ -4,6 +4,7 @@ from point import Point
 from obstacle import Obstacle
 from field import Field
 from util import *
+import numpy as np
 
 PLOT = True
 
@@ -33,18 +34,23 @@ for polygon in polygons:
 merged_obstacles = merge_all(obstacles)
 
 field = Field(start, finish, edges_points, merged_obstacles)
-
-if PLOT:
-    field.draw_obstacles()
-start_time = time.time()
-tri, points_array = field.triangulate_free_space()
-
-G = field.create_graph(tri, points_array)
+field.draw_obstacles()
+triangles = field.tr_space()
+G = field.create_own_graph(triangles)
 shortest_path = field.find_shortest_path(G)
-if PLOT:
-    field.draw_graph(G, tri, points_array, shortest_path)
+field.draw_new_graph(G, triangles, shortest_path)
 
-total_time = time.time() - start_time
+# if PLOT:
+#     field.draw_obstacles()
+# start_time = time.time()
+# tri, points_array = field.triangulate_free_space()
 
-# print("Кратчайший путь:", shortest_path)
-print("время выполнения:", total_time)
+# G = field.create_graph(tri, points_array)
+# shortest_path = field.find_shortest_path(G)
+# if PLOT:
+#     field.draw_graph(G, tri, points_array, shortest_path)
+
+# total_time = time.time() - start_time
+
+# # print("Кратчайший путь:", shortest_path)
+# print("время выполнения:", total_time)
