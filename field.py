@@ -5,6 +5,7 @@ from scipy.spatial import Delaunay
 from point import Point
 from obstacle import Obstacle
 from triangualtion import bowyer_watson
+import matplotlib.path as mplPath
 
 class Field:
     def __init__(self, start: Point, finish: Point, edges: list[Point], obstacles: list[Obstacle] = None, plot = False) -> None:
@@ -96,6 +97,14 @@ class Field:
             if point in [(p.x, p.y) for p in obstacle.points]:
                 return True
         return False
+    
+    def is_point_inside_obstacle(self, point):
+        for obstacle in self.obstacles:
+            poly = mplPath.Path([(p.x, p.y) for p in obstacle.points])
+            if poly.contains_point(point):
+                return True
+        return False
+
 
     def create_graph(self, tri, points_array):
         G = nx.Graph()
@@ -156,7 +165,10 @@ class Field:
             
             # Центроид треугольника
             centroid = ((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3)
-            G.add_node(centroid)
+            if not self.is_point_inside_obstacle(centroid):
+                G.add_node(centroid)
+            else:
+                continue
             
             # Средние точки сторон
             midpoints = [
@@ -172,14 +184,15 @@ class Field:
             for i, (p_start, p_end) in enumerate([(p1, p2), (p2, p3), (p3, p1)]):
                 if not self.is_edge_on_obstacle((p_start.x, p_start.y), (p_end.x, p_end.y)):
                     midpoint = midpoints[i]
-                    G.add_node(midpoint)
-                    G.add_edge(centroid, midpoint,
-                            weight=np.linalg.norm(np.array(centroid) - np.array(midpoint)))
-                    v.append(midpoint)
+                    if not self.is_point_inside_obstacle(midpoint):
+                        G.add_node(midpoint)
+                        G.add_edge(centroid, midpoint,
+                                weight=np.linalg.norm(np.array(centroid) - np.array(midpoint)))
+                        v.append(midpoint)
 
             # Добавляем вершины треугольника, если они не на препятствиях
             for point in vertices:
-                if not self.is_point_on_obstacle(point):
+                if not self.is_point_on_obstacle(point) and not self.is_point_inside_obstacle(point):
                     G.add_node(point)
                     G.add_edge(centroid, point,
                             weight=np.linalg.norm(np.array(centroid) - np.array(point)))
@@ -259,5 +272,9 @@ class Field:
     def find_shortest_path(self, G):
         start_node = (self.start_point.x, self.start_point.y)
         finish_node = (self.finish_point.x, self.finish_point.y)
-        path = nx.shortest_path(G, source=start_node, target=finish_node, weight='weight')
-        return path
+        try:
+            path = nx.shortest_path(G, source=start_node, target=finish_node, weight='weight')
+            return path
+        except nx.NetworkXNoPath:
+            print(f"Нет пути между {start_node} и {finish_node}.")
+            return None

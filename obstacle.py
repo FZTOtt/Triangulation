@@ -5,8 +5,11 @@ from point import Point
 
 
 class Obstacle:
-    def __init__(self, points: list[Point]) -> None:
-        self.points = self.ensure_clockwise(points)
+    def __init__(self, points: list[Point], ensure = True) -> None:
+        if ensure:
+            self.points = self.ensure_clockwise(points)
+        else:
+            self.points = points
         self.color = (random.random(), random.random(), random.random())
 
     @staticmethod
@@ -35,12 +38,17 @@ class Obstacle:
         """
         Проверяет, идут ли точки по часовой стрелке.
         """
-        sum_angles = 0
+        # sum_angles = 0
+        # for i in range(len(points)):
+        #     p1 = points[i]
+        #     p2 = points[(i + 1) % len(points)]
+        #     sum_angles += (p2.x - p1.x) * (p2.y + p1.y)
+        # return sum_angles > 0
+        area = 0
         for i in range(len(points)):
-            p1 = points[i]
-            p2 = points[(i + 1) % len(points)]
-            sum_angles += (p2.x - p1.x) * (p2.y + p1.y)
-        return sum_angles > 0
+            j = (i + 1) % len(points)
+            area += (points[j].x - points[i].x) * (points[j].y + points[i].y)
+        return area < 0
 
     def plot(self):
         """
@@ -189,4 +197,32 @@ class Obstacle:
         if merged_points[0] == merged_points[-1]:
             merged_points.pop()
 
-        return Obstacle(merged_points)
+        x, y = zip(*[(p.x, p.y) for p in merged_points])
+        plt.plot(x + (x[0],), y + (y[0],), 'b-', linewidth=2, label='Merged Obstacle')  # Синий контур объединённого препятствия
+
+        # Препятствие 1
+        plt.plot([p.x for p in self.points] + [self.points[0].x], 
+                [p.y for p in self.points] + [self.points[0].y], 
+                'r--', linewidth=1, label='Obstacle 1')  # Красный пунктир
+
+        # Препятствие 2
+        plt.plot([p.x for p in other.points] + [other.points[0].x], 
+                [p.y for p in other.points] + [other.points[0].y], 
+                'g--', linewidth=1, label='Obstacle 2')  # Зелёный пунктир
+
+        # Вершины препятствий
+        plt.scatter([p.x for p in self.points], [p.y for p in self.points], c='r', s=30, label='Points Obstacle 1', alpha=0.7)
+        plt.scatter([p.x for p in other.points], [p.y for p in other.points], c='g', s=30, label='Points Obstacle 2', alpha=0.7)
+        plt.scatter(x, y, c='b', s=30, label='Points Merged', alpha=0.7)
+
+        # Подписи координат точек
+        for i, p in enumerate(merged_points):
+            plt.text(p.x, p.y, f'{i}', fontsize=8, ha='right')
+
+        plt.legend()
+        plt.xlim([0, 100])
+        plt.ylim([0, 100])
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.show()
+
+        return Obstacle(merged_points, ensure=False)

@@ -8,7 +8,7 @@ import numpy as np
 
 PLOT = True
 
-with open('2.json') as f:
+with open('7.json') as f:
     data = json.load(f)
 
 def filter_by_type(data, type_name):
@@ -31,9 +31,17 @@ for polygon in polygons:
     obstacle = Obstacle(points)
     obstacles.append(obstacle)
 
+
+# merged_obstacles = obstacles
 merged_obstacles = merge_all(obstacles)
-start_time = time.time()
+# merged_obstacles = merge_all_obstacles_shapely(obstacles)
+
+# merged_obstacles = merge_all(merged_obstacles)
+
 field = Field(start, finish, edges_points, merged_obstacles)
+
+
+start_time = time.time()
 triangles = field.tr_space()
 G = field.create_own_graph(triangles)
 shortest_path = field.find_shortest_path(G)
@@ -41,6 +49,7 @@ total_time = time.time() - start_time
 print("время выполнения:", total_time)
 field.draw_obstacles()
 field.draw_new_graph(G, triangles, shortest_path)
+
 
 # if PLOT:
 #     field.draw_obstacles()
