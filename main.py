@@ -32,12 +32,14 @@ for polygon in polygons:
     obstacles.append(obstacle)
 
 merged_obstacles = merge_all(obstacles)
-
+start_time = time.time()
 field = Field(start, finish, edges_points, merged_obstacles)
-field.draw_obstacles()
 triangles = field.tr_space()
 G = field.create_own_graph(triangles)
 shortest_path = field.find_shortest_path(G)
+total_time = time.time() - start_time
+print("время выполнения:", total_time)
+field.draw_obstacles()
 field.draw_new_graph(G, triangles, shortest_path)
 
 # if PLOT:

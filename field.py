@@ -39,7 +39,7 @@ class Field:
             ax.set_xlabel('X')
             ax.set_ylabel('Y')
             ax.grid(True)
-            plt.show()
+            # plt.show()
 
         return tri, points_array
     
@@ -56,7 +56,7 @@ class Field:
         points_array = np.array(all_points)
         points_list = [Point(x, y) for x, y in points_array]
         triangles = bowyer_watson(points_list)
-        plt.show()
+        # plt.show()
 
         return triangles
 
