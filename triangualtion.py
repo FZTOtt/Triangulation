@@ -53,7 +53,7 @@ def bowyer_watson(points, testing = False):
     Plots the delaunay triangulation of points using the bowyer watson algorithm
     '''
     # Sorts all points in terms of x coordinate
-    points.sort(key=lambda p: p.x)
+    # points.sort(key=lambda p: p.x)
     
     # Generates super triangle to surround all points
     min_x = min(point.x for point in points)

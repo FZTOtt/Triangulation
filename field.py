@@ -6,6 +6,7 @@ from point import Point
 from obstacle import Obstacle
 from triangualtion import bowyer_watson
 import matplotlib.path as mplPath
+from obstacle import distance_squared
 
 class Field:
     def __init__(self, start: Point, finish: Point, edges: list[Point], obstacles: list[Obstacle] = None, plot = False) -> None:
@@ -95,27 +96,95 @@ class Field:
     def is_point_on_obstacle(self, point):
         for obstacle in self.obstacles:
             if point in [(p.x, p.y) for p in obstacle.points]:
-                return True
+                return obstacle
         return False
     
     def is_point_inside_obstacle(self, point):
         for obstacle in self.obstacles:
             poly = mplPath.Path([(p.x, p.y) for p in obstacle.points])
             if poly.contains_point(point):
-                return True
+                return obstacle
         return False
+    
+    def find_intersection_with_obstacle(self, p1, p2):
+        """
+        Находит пересечение отрезка p1p2 с границей препятствия.
+        """
+        for obstacle in self.obstacles:
+            for i in range(len(obstacle.points)):
+                o1 = obstacle.points[i]
+                o2 = obstacle.points[(i + 1) % len(obstacle.points)]
+                intersection = self.line_intersection(p1, p2, o1, o2)
+                if intersection:
+                    return intersection
+        return None
+
+
+    def line_intersection(self, p1, p2, q1, q2):
+        """
+        Находит точку пересечения двух отрезков (p1p2) и (q1q2).
+        """
+        def det(a, b, c, d):
+            return a * d - b * c
+
+        x1, y1 = p1
+        x2, y2 = p2
+        x3, y3 = q1.x, q1.y
+        x4, y4 = q2.x, q2.y
+
+        denom = det(x1 - x2, y1 - y2, x3 - x4, y3 - y4)
+        if abs(denom) < 1e-7:
+            return None  # Отрезки параллельны
+
+        px = det(det(x1, y1, x2, y2), x1 - x2, det(x3, y3, x4, y4), x3 - x4) / denom
+        py = det(det(x1, y1, x2, y2), y1 - y2, det(x3, y3, x4, y4), y3 - y4) / denom
+
+        # Проверка, что точка пересечения находится на обоих отрезках
+        if (
+            min(x1, x2) <= px <= max(x1, x2)
+            and min(y1, y2) <= py <= max(y1, y2)
+            and min(x3, x4) <= px <= max(x3, x4)
+            and min(y3, y4) <= py <= max(y3, y4)
+        ):
+            return px, py
+        return None
+    
+    def find_all_line_vertices(self, start, end):
+        '''Находит пересечения с предятствиями и добавляет середины отрезков вне препятствий'''
+        intersections = self.find_intersection_with_obstacle(start, end)
+        points = []
+        points.extend([start, end])
+        points.extend(intersections)
+        points.sort(key=lambda p: distance_squared(start, p)) # отсортировали по прямой
+
+        result = []
+
+        for i in range(len(points)-1):
+
+            current_point = points[i]
+            next_point = points[i+1]
+            midpoint = ((current_point[0] + next_point[0]) / 2, (current_point[1] + next_point[1]) / 2)
+
+            if not self.is_point_inside_obstacle(midpoint):
+                result.append(midpoint)
+
+        return result
 
 
     def create_graph(self, tri, points_array):
         G = nx.Graph()
 
         for simplex in tri.simplices:
+            add_centroid = True
             p1 = (points_array[simplex[0], 0], points_array[simplex[0], 1])
             p2 = (points_array[simplex[1], 0], points_array[simplex[1], 1])
             p3 = (points_array[simplex[2], 0], points_array[simplex[2], 1])
 
             centroid = ((p1[0] + p2[0] + p3[0]) / 3, (p1[1] + p2[1] + p3[1]) / 3)
-            G.add_node(centroid)
+            if not self.is_point_inside_obstacle(centroid):
+                G.add_node(centroid)
+            else:
+                add_centroid = False
 
             midpoints = [
                 ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2),
@@ -126,30 +195,34 @@ class Field:
             vertices = [p1, p2, p3]
             v = []
 
-            if not self.is_edge_on_obstacle(p1, p2):
-                G.add_node(midpoints[0])
-                G.add_edge(centroid, midpoints[0], weight=np.linalg.norm(np.array(centroid) - np.array(midpoints[0])))
-                v.append(midpoints[0])
+            for i, (p_start, p_end) in enumerate([(p1, p2), (p2, p3), (p3, p1)]):
+                if not self.is_edge_on_obstacle(p_start, p_end):
+                    midpoint = midpoints[i]
+                    if not self.is_point_inside_obstacle(midpoint):
+                        G.add_node(midpoint)
+                        if add_centroid:
+                            G.add_edge(centroid, midpoint,
+                                    weight=np.linalg.norm(np.array(centroid) - np.array(midpoint)))
+                        v.append(midpoint)
+                    else:
+                        # найти пересечение триангуляции с препятствием и добавить точку середины отрезка
+                        vert = self.find_all_line_vertices(p_start, p_end)
 
-            if not self.is_edge_on_obstacle(p2, p3):
-                G.add_node(midpoints[1])
-                G.add_edge(centroid, midpoints[1], weight=np.linalg.norm(np.array(centroid) - np.array(midpoints[1])))
-                v.append(midpoints[1])
 
-            if not self.is_edge_on_obstacle(p1, p3):
-                G.add_node(midpoints[2])
-                G.add_edge(centroid, midpoints[2], weight=np.linalg.norm(np.array(centroid) - np.array(midpoints[2])))
-                v.append(midpoints[2])
 
+            # Добавляем вершины треугольника, если они не на препятствиях
             for point in vertices:
-                if not self.is_point_on_obstacle(point):
+                if not self.is_point_on_obstacle(point) and not self.is_point_inside_obstacle(point):
                     G.add_node(point)
-                    G.add_edge(centroid, point, weight=np.linalg.norm(np.array(centroid) - np.array(point)))
+                    if add_centroid:
+                        G.add_edge(centroid, point,
+                                weight=np.linalg.norm(np.array(centroid) - np.array(point)))
                     v.append(point)
 
             for i in range(len(v)):
                 for j in range(i + 1, len(v)):
-                    G.add_edge(v[i], v[j], weight=np.linalg.norm(np.array(v[i]) - np.array(v[j])))
+                    if not self.find_intersection_with_obstacle(v[i], v[j]):
+                        G.add_edge(v[i], v[j], weight=np.linalg.norm(np.array(v[i]) - np.array(v[j])))
 
         G.add_node((self.start_point.x, self.start_point.y))
         G.add_node((self.finish_point.x, self.finish_point.y))
@@ -161,8 +234,10 @@ class Field:
 
         for triangle in triangles:
             # Получаем вершины треугольника
-            p1, p2, p3 = triangle.points
-            
+            try:
+                p1, p2, p3 = triangle.points
+            except:
+                print(triangle)
             # Центроид треугольника
             centroid = ((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3)
             if not self.is_point_inside_obstacle(centroid):

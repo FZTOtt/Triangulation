@@ -109,12 +109,28 @@ class Obstacle:
         """
         Формирует два списка точек с учетом сортировки по часовой стрелке и добавления точек пересечения.
         """
-        self_points = self.points + intersections
-        self_points = self.ensure_clockwise(self_points)
+        def insert_intersections(points, intersections):
+            result = []
+            for i in range(len(points)):
+                current_point = points[i]
+                next_point = points[(i + 1) % len(points)]
+                
+                # Добавляем текущую вершину
+                result.append(current_point)
 
-        other_points = other.points + intersections
-        other_points = self.ensure_clockwise(other_points)
+                segment_intersections = [
+                    p for p in intersections if is_point_on_segment(p, current_point, next_point)
+                ]
 
+                segment_intersections.sort(key=lambda p: distance_squared(current_point, p))
+
+                result.extend(segment_intersections)
+                
+            return result
+        
+        self_points = insert_intersections(self.points, intersections)
+        other_points = insert_intersections(other.points, intersections)
+        
         return self_points, other_points
     
     @staticmethod
@@ -197,32 +213,59 @@ class Obstacle:
         if merged_points[0] == merged_points[-1]:
             merged_points.pop()
 
-        x, y = zip(*[(p.x, p.y) for p in merged_points])
-        plt.plot(x + (x[0],), y + (y[0],), 'b-', linewidth=2, label='Merged Obstacle')  # Синий контур объединённого препятствия
+        # x, y = zip(*[(p.x, p.y) for p in merged_points])
+        # plt.plot(x + (x[0],), y + (y[0],), 'b-', linewidth=2, label='Merged Obstacle')  # Синий контур объединённого препятствия
 
-        # Препятствие 1
-        plt.plot([p.x for p in self.points] + [self.points[0].x], 
-                [p.y for p in self.points] + [self.points[0].y], 
-                'r--', linewidth=1, label='Obstacle 1')  # Красный пунктир
+        # # Препятствие 1
+        # plt.plot([p.x for p in self.points] + [self.points[0].x], 
+        #         [p.y for p in self.points] + [self.points[0].y], 
+        #         'r--', linewidth=1, label='Obstacle 1')  # Красный пунктир
 
-        # Препятствие 2
-        plt.plot([p.x for p in other.points] + [other.points[0].x], 
-                [p.y for p in other.points] + [other.points[0].y], 
-                'g--', linewidth=1, label='Obstacle 2')  # Зелёный пунктир
+        # # Препятствие 2
+        # plt.plot([p.x for p in other.points] + [other.points[0].x], 
+        #         [p.y for p in other.points] + [other.points[0].y], 
+        #         'g--', linewidth=1, label='Obstacle 2')  # Зелёный пунктир
 
-        # Вершины препятствий
-        plt.scatter([p.x for p in self.points], [p.y for p in self.points], c='r', s=30, label='Points Obstacle 1', alpha=0.7)
-        plt.scatter([p.x for p in other.points], [p.y for p in other.points], c='g', s=30, label='Points Obstacle 2', alpha=0.7)
-        plt.scatter(x, y, c='b', s=30, label='Points Merged', alpha=0.7)
+        # # Вершины препятствий
+        # plt.scatter([p.x for p in self.points], [p.y for p in self.points], c='r', s=30, label='Points Obstacle 1', alpha=0.7)
+        # plt.scatter([p.x for p in other.points], [p.y for p in other.points], c='g', s=30, label='Points Obstacle 2', alpha=0.7)
+        # plt.scatter(x, y, c='b', s=30, label='Points Merged', alpha=0.7)
 
-        # Подписи координат точек
-        for i, p in enumerate(merged_points):
-            plt.text(p.x, p.y, f'{i}', fontsize=8, ha='right')
+        # # Подписи координат точек
+        # for i, p in enumerate(merged_points):
+        #     plt.text(p.x, p.y, f'{i}', fontsize=8, ha='right')
 
-        plt.legend()
-        plt.xlim([0, 100])
-        plt.ylim([0, 100])
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
+        # plt.legend()
+        # plt.xlim([0, 100])
+        # plt.ylim([0, 100])
+        # plt.gca().set_aspect('equal', adjustable='box')
+        # plt.show()
 
         return Obstacle(merged_points, ensure=False)
+
+
+
+def is_point_on_segment(p: Point, a: Point, b: Point) -> bool:
+    """
+    Проверяет, лежит ли точка p на отрезке ab.
+    """
+    cross_product = (p.y - a.y) * (b.x - a.x) - (p.x - a.x) * (b.y - a.y)
+    if abs(cross_product) > 1e-7:
+        return False  # Точка не на прямой
+
+    # Проверяем, лежит ли точка между a и b
+    dot_product = (p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)
+    if dot_product < 0:
+        return False
+
+    squared_length_ab = (b.x - a.x) ** 2 + (b.y - a.y) ** 2
+    if dot_product > squared_length_ab:
+        return False
+    
+    return True
+
+def distance_squared(a: Point, b: Point) -> float:
+    """
+    Вычисляет квадрат расстояния между двумя точками.
+    """
+    return (b.x - a.x) ** 2 + (b.y - a.y) ** 2

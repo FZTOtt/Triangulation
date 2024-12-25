@@ -20,7 +20,7 @@ def merge_all(obstacles):
                 if isinstance(obst, tuple):
                     pass
                 else:
-                    merged_obstacles[idx] = obst # current_obstacle тоже изменится?
+                    merged_obstacles[idx] = obst
                     current_obstacle = obst
                     merged_obstacles[i] = None
             else:

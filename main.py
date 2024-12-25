@@ -34,6 +34,7 @@ for polygon in polygons:
 
 # merged_obstacles = obstacles
 merged_obstacles = merge_all(obstacles)
+merged_obstacles = merge_all(merged_obstacles)
 # merged_obstacles = merge_all_obstacles_shapely(obstacles)
 
 # merged_obstacles = merge_all(merged_obstacles)
@@ -41,27 +42,27 @@ merged_obstacles = merge_all(obstacles)
 field = Field(start, finish, edges_points, merged_obstacles)
 
 
-start_time = time.time()
-triangles = field.tr_space()
-G = field.create_own_graph(triangles)
-shortest_path = field.find_shortest_path(G)
-total_time = time.time() - start_time
-print("время выполнения:", total_time)
-field.draw_obstacles()
-field.draw_new_graph(G, triangles, shortest_path)
-
-
-# if PLOT:
-#     field.draw_obstacles()
 # start_time = time.time()
-# tri, points_array = field.triangulate_free_space()
-
-# G = field.create_graph(tri, points_array)
+# triangles = field.tr_space()
+# G = field.create_own_graph(triangles)
 # shortest_path = field.find_shortest_path(G)
-# if PLOT:
-#     field.draw_graph(G, tri, points_array, shortest_path)
-
 # total_time = time.time() - start_time
-
-# # print("Кратчайший путь:", shortest_path)
 # print("время выполнения:", total_time)
+# field.draw_obstacles()
+# field.draw_new_graph(G, triangles, shortest_path)
+
+
+if PLOT:
+    field.draw_obstacles()
+start_time = time.time()
+tri, points_array = field.triangulate_free_space()
+
+G = field.create_graph(tri, points_array)
+shortest_path = field.find_shortest_path(G)
+if PLOT:
+    field.draw_graph(G, tri, points_array, shortest_path)
+
+total_time = time.time() - start_time
+
+# print("Кратчайший путь:", shortest_path)
+print("время выполнения:", total_time)
