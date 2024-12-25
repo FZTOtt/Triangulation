@@ -110,14 +110,15 @@ class Field:
         """
         Находит пересечение отрезка p1p2 с границей препятствия.
         """
+        intersections = []
         for obstacle in self.obstacles:
             for i in range(len(obstacle.points)):
                 o1 = obstacle.points[i]
                 o2 = obstacle.points[(i + 1) % len(obstacle.points)]
                 intersection = self.line_intersection(p1, p2, o1, o2)
                 if intersection:
-                    return intersection
-        return None
+                    intersections.extend(intersection)
+        return intersections if intersections else None
 
 
     def line_intersection(self, p1, p2, q1, q2):
@@ -146,7 +147,7 @@ class Field:
             and min(x3, x4) <= px <= max(x3, x4)
             and min(y3, y4) <= py <= max(y3, y4)
         ):
-            return px, py
+            return [(px, py)]
         return None
     
     def find_all_line_vertices(self, start, end):
@@ -154,8 +155,10 @@ class Field:
         intersections = self.find_intersection_with_obstacle(start, end)
         points = []
         points.extend([start, end])
+        if not intersections:
+            return
         points.extend(intersections)
-        points.sort(key=lambda p: distance_squared(start, p)) # отсортировали по прямой
+        points.sort(key=lambda p: ((p[0] - start[0]) ** 2 + (p[1] - start[1]) ** 2)) # отсортировали по прямой (p[0] - start[0]) ** 2 + (p[1] - start[1]) ** 2
 
         result = []
 
@@ -165,7 +168,7 @@ class Field:
             next_point = points[i+1]
             midpoint = ((current_point[0] + next_point[0]) / 2, (current_point[1] + next_point[1]) / 2)
 
-            if not self.is_point_inside_obstacle(midpoint):
+            if not self.is_point_inside_obstacle(midpoint) and not self.is_point_on_obstacle(midpoint):
                 result.append(midpoint)
 
         return result
@@ -175,16 +178,15 @@ class Field:
         G = nx.Graph()
 
         for simplex in tri.simplices:
-            add_centroid = True
             p1 = (points_array[simplex[0], 0], points_array[simplex[0], 1])
             p2 = (points_array[simplex[1], 0], points_array[simplex[1], 1])
             p3 = (points_array[simplex[2], 0], points_array[simplex[2], 1])
 
             centroid = ((p1[0] + p2[0] + p3[0]) / 3, (p1[1] + p2[1] + p3[1]) / 3)
+            v = []
+            G.add_node(centroid)
             if not self.is_point_inside_obstacle(centroid):
-                G.add_node(centroid)
-            else:
-                add_centroid = False
+                v.append(centroid)
 
             midpoints = [
                 ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2),
@@ -193,30 +195,26 @@ class Field:
             ]
 
             vertices = [p1, p2, p3]
-            v = []
+            
 
             for i, (p_start, p_end) in enumerate([(p1, p2), (p2, p3), (p3, p1)]):
                 if not self.is_edge_on_obstacle(p_start, p_end):
                     midpoint = midpoints[i]
                     if not self.is_point_inside_obstacle(midpoint):
                         G.add_node(midpoint)
-                        if add_centroid:
-                            G.add_edge(centroid, midpoint,
-                                    weight=np.linalg.norm(np.array(centroid) - np.array(midpoint)))
                         v.append(midpoint)
                     else:
                         # найти пересечение триангуляции с препятствием и добавить точку середины отрезка
                         vert = self.find_all_line_vertices(p_start, p_end)
-
-
+                        if vert:
+                            for point in vert:
+                                G.add_node(point)
+                                v.append(point)
 
             # Добавляем вершины треугольника, если они не на препятствиях
             for point in vertices:
                 if not self.is_point_on_obstacle(point) and not self.is_point_inside_obstacle(point):
                     G.add_node(point)
-                    if add_centroid:
-                        G.add_edge(centroid, point,
-                                weight=np.linalg.norm(np.array(centroid) - np.array(point)))
                     v.append(point)
 
             for i in range(len(v)):

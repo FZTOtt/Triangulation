@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 from math import atan2, pi
 from point import Point
-
+import matplotlib.path as mplPath
 
 class Obstacle:
     def __init__(self, points: list[Point], ensure = True) -> None:
@@ -160,6 +160,10 @@ class Obstacle:
         """
         intersections = self.find_intersections(other)
         if not intersections:
+            if self.is_point_inside(self.points[0], other.points):
+                return other
+            elif self.is_point_inside(other.points[0], self.points):
+                return self
             # Если нет пересечений, возвращаем два препятствия
             return self, other
         self_points, other_points = self.define_arrays(other, intersections)
