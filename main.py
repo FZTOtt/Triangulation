@@ -8,7 +8,7 @@ import numpy as np
 
 PLOT = True
 
-with open('7.json') as f:
+with open('6.json') as f:
     data = json.load(f)
 
 def filter_by_type(data, type_name):

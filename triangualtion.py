@@ -7,10 +7,6 @@ from point import Point
         
 class Triangle:
     def __init__(self, p1, p2, p3):
-        '''
-        Initializes points, edges, and rearranges order until points are in a
-        counter-clockwise order
-        '''
         self.points = [p1, p2, p3]
         self.edges = [(p1, p2), (p1, p3), (p2,p3)]
         while self.ccw():
@@ -49,49 +45,40 @@ class Triangle:
                  [self.points[0].y, self.points[1].y, self.points[2].y, self.points[0].y], "ro-")
     
 def bowyer_watson(points, testing = False):
-    '''
-    Plots the delaunay triangulation of points using the bowyer watson algorithm
-    '''
-    # Sorts all points in terms of x coordinate
-    # points.sort(key=lambda p: p.x)
+    points.sort(key=lambda p: p.x)
     
-    # Generates super triangle to surround all points
+    # Построение супер треугольника
     min_x = min(point.x for point in points)
     min_y = min(point.y for point in points)
     max_x = max(point.x for point in points)
     max_y = max(point.y for point in points)
     
-    # Calculate the ranges for x and y
     range_x = max_x - min_x
     range_y = max_y - min_y
     
-    # Find the maximum range value
     max_range = max(range_x, range_y)
     
-    # Calculate the center point of the range
     center_x = (min_x + max_x) / 2
     center_y = (min_y + max_y) / 2
     
-    # Calculate the vertices of the super-triangle
     p1 = Point(center_x - 20 * max_range, center_y - max_range)
     p2 = Point(center_x, center_y + 20 * max_range)
     p3 = Point(center_x + 20 * max_range, center_y - max_range)
     
     super_triangle = Triangle(p1, p2, p3)
     
-    # Initial triangulation is the super_triangle
+    # Инициализация триангуляции супер-треугольником
     triangles = [super_triangle]
     
-    # Loop over all points
+
     for point in points:
         bad_triangles = []
-        bad_edges = []
-        # Loop over triangles to check if point is in its circumcircle
+        # Проверка находится ли точка в окружности треугольника
         for triangle in triangles:
             if triangle.in_circumcircle(point):
                 bad_triangles.append(triangle)
         polygon = []
-        # Get boundary of the new polygon boundary
+        # Формирование многоугольной пустоты
         for triangle in bad_triangles:
             not_triangle = [x for x in bad_triangles if x != triangle]
             for edge in triangle.edges:
@@ -102,14 +89,15 @@ def bowyer_watson(points, testing = False):
                             shared_count += 1
                 if shared_count == 0:
                     polygon.append(edge)
-        # Remove bad triangles
+        # Удаление плохих треугольников
         for triangle in bad_triangles:
             triangles.remove(triangle)
+        # Добавление новых треугольников в триангуляцию
         for edge in polygon:
             triangle = Triangle(edge[0], edge[1], point)
             triangles.append(triangle)
 
-    # Remove triangles which share boundaries with the super triangle
+    # Удаление супер-треугольника
     triangles_to_remove = []
     for i in range(len(triangles)):
         triangle = triangles[i]

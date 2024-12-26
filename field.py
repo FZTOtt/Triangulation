@@ -6,7 +6,6 @@ from point import Point
 from obstacle import Obstacle
 from triangualtion import bowyer_watson
 import matplotlib.path as mplPath
-from obstacle import distance_squared
 
 class Field:
     def __init__(self, start: Point, finish: Point, edges: list[Point], obstacles: list[Obstacle] = None, plot = False) -> None:
@@ -232,10 +231,7 @@ class Field:
 
         for triangle in triangles:
             # Получаем вершины треугольника
-            try:
-                p1, p2, p3 = triangle.points
-            except:
-                print(triangle)
+            p1, p2, p3 = triangle.points
             # Центроид треугольника
             centroid = ((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3)
             if not self.is_point_inside_obstacle(centroid):

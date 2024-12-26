@@ -17,15 +17,3 @@ class Point:
 
     def __repr__(self):
         return f"Point({self.x}, {self.y})"
-    
-    def distance(self, p):
-        '''
-        Returns the distance between self and p
-        '''
-        return math.sqrt((p.x - self.x)**2 + (p.y - self.y)**2)
-        
-    def plot_point(self):
-        '''
-        Plots x,y coordinates of self
-        '''
-        plt.plot([self.x], [self.y], 'ro')

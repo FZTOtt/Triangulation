@@ -38,12 +38,6 @@ class Obstacle:
         """
         Проверяет, идут ли точки по часовой стрелке.
         """
-        # sum_angles = 0
-        # for i in range(len(points)):
-        #     p1 = points[i]
-        #     p2 = points[(i + 1) % len(points)]
-        #     sum_angles += (p2.x - p1.x) * (p2.y + p1.y)
-        # return sum_angles > 0
         area = 0
         for i in range(len(points)):
             j = (i + 1) % len(points)
@@ -156,7 +150,7 @@ class Obstacle:
     
     def merge_with(self, other: 'Obstacle') -> 'Obstacle' or tuple['Obstacle', 'Obstacle']:
         """
-        Объединяет два препятствия в одно, если они пересекаются, иначе возвращает два препятствия.
+        Объединяет два препятствия в одно, если они пересекаются или одно вложено в другое, иначе возвращает два препятствия.
         """
         intersections = self.find_intersections(other)
         if not intersections:
@@ -205,7 +199,6 @@ class Obstacle:
                     current_idx = (current_idx + 1) % len(other_points)
                 else:
                     merged_points.append(other_points[current_idx])
-                    # здесь надо найти эту точку пересечения в self_points
                     current_point = other_points[current_idx]
                     self_idx = self_points.index(current_point)
                     self_flag = True
